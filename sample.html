@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>D3 Example</title>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  <style>
+    .axis text {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 12pt;
+    }
+    .axis .label {
+      font-size: 20pt;
+
+    }
+    .axis path, .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+  </style>
+</head>
+<body>
+  <svg id="visualisation" width="900" height="100"></svg>
+  <script>
+    var outerWidth = 1000;
+    var outerHeight = 500;
+    var margin = { left: 200, top: 30, right: 30, bottom: 100 };
+    var barPadding = 0.2;
+    var xColumn = "year";
+    var yColumn = "value";
+    var colorColumn = "description";
+    var layerColumn = colorColumn;
+    var innerWidth  = outerWidth  - margin.left - margin.right;
+    var innerHeight = outerHeight - margin.top  - margin.bottom;
+
+    var svg = d3.select("body").append("svg")
+      .attr("width",  1000)
+      .attr("height", 500);
+    var g = svg.append("g")
+      .attr("transform", "translate(200,30)");
+    var xAxisG = g.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + innerHeight + ")");
+    var yAxisG = g.append("g")
+      .attr("class", "y axis");
+      var vis = d3.select("#visualisation"),
+          WIDTH = 900,
+          HEIGHT = 500,
+          MARGINS = {
+              top: 20,
+              right: 20,
+              bottom: 20,
+              left: 80
+          };
+    var xScale = d3.scale.ordinal().rangeBands([0, innerWidth], barPadding);
+    var yScale = d3.scale.linear().range([innerHeight, 0]);
+    var colorScale = d3.scale.category20();
+    // Use a modified SI formatter that uses "B" for Billion.
+    var siFormat = d3.format("s");
+    var customTickFormat = function (d){
+      return siFormat(d);
+    };
+    var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
+      .outerTickSize(0);
+    var yAxis = d3.svg.axis().scale(yScale).orient("left")
+      .ticks(15)
+      .tickFormat(customTickFormat)
+      .outerTickSize(0);
+              svg.append("text")      // text label for the x axis
+                      .attr("x", -200 )
+                      .attr("y", 150 )
+                      .style("text-anchor", "middle")
+                      .attr("transform", "rotate(-90)")
+                      .style("font-size",18)
+                      .style("font-weight","bold")
+                      .text("VALUE");
+             svg.append("text")      // text label for the x axis
+                      .attr("x", 550 )
+                      .attr("y", 450 )
+                      .style("text-anchor", "middle")
+                      .style("font-size",18)
+                      .style("font-weight","bold")
+                      .text("YEAR");
+    function render(data){
+      var nested = d3.nest()
+        .key(function (d){ return d[layerColumn]; })
+        .entries(data)
+      var stack = d3.layout.stack()
+        .y(function (d){ return d[yColumn]; })
+        .values(function (d){ return d.values; });
+      var layers = stack(nested);
+      xScale.domain(layers[0].values.map(function (d){
+        return d[xColumn];
+      }));
+      yScale.domain([
+        0,
+        d3.max(layers, function (layer){
+          return d3.max(layer.values, function (d){
+            return d.y0 + d.y;
+          });
+        })
+      ]);
+      colorScale.domain(layers.map(function (layer){
+        return layer.key;
+      }));
+      xAxisG.call(xAxis);
+      yAxisG.call(yAxis);
+      var layerGroups = g.selectAll(".layer").data(layers);
+      layerGroups.enter().append("g").attr("class", "layer");
+      layerGroups.exit().remove();
+      layerGroups.style("fill", function (d){
+        return colorScale(d.key);
+      });
+      var bars = layerGroups.selectAll("rect").data(function (d){
+        return d.values;
+      });
+      bars.enter().append("rect")
+      bars.exit().remove();
+      bars
+        .attr("x", function (d){ return xScale(d[xColumn]); })
+        .attr("y", function (d){ return yScale(d.y + d.y0); })
+        .attr("width", xScale.rangeBand())
+        .attr("height", function (d){ return innerHeight - yScale(d.y); })
+    }
+    svg.append('text')
+        .attr('fill', 'black')
+        .attr('x', 665 + MARGINS.left + 8)
+        .attr('y', 0  * 24 + 24)
+        .text("THEFT : OVER $500");
+    svg.append('rect')
+        .attr('fill', "rgb(31,119,180)")
+        .attr('width', 60)
+        .attr('height', 20)
+        .attr('x', 750 + MARGINS.left + 90)
+        .attr('y', 0 * 24 + 6);
+    svg.append('text')
+        .attr('fill', 'black')
+        .attr('x', 655 + MARGINS.left + 8)
+        .attr('y', 1 * 24 + 24)
+        .text("THEFT : UNDER $500");
+    svg.append('rect')
+        .attr('fill', "rgb(174, 199, 232)")
+        .attr('width', 60)
+        .attr('height', 20)
+        .attr('x', 750 + MARGINS.left + 90)
+        .attr('y', 1 * 24 + 6);
+    d3.json("myJsonFIle.json", render);
+  </script>
+</body>
+</html>

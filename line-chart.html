@@ -1,0 +1,126 @@
+<html lang="en">
+<head>
+   <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+   <link href="http://getbootstrap.com/examples/justified-nav/justified-nav.css" rel="stylesheet">
+   <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+   <!-- <link href="style.css" rel="stylesheet"> -->
+</head>
+<body>
+   <div class="container">
+       <!-- <div class="jumbotron"> -->
+         <svg id="visualisation" width="900" height="600"></svg>
+       <!-- </div> -->
+   </div>
+   <script>
+     var Arrested =[];
+     var not_arrested =[];
+       d3.json("myJsonTwo.json", function(data)
+       {
+         for(var i=0;i<data.length;i++)
+         {
+           if(data[i].description == "arrested")
+           {
+             Arrested.push(data[i]);
+           }
+           else
+           {
+             not_arrested.push(data[i]);
+           }
+         }
+       var vis = d3.select("#visualisation"),
+           WIDTH = 900,
+           HEIGHT = 500,
+           MARGINS = {
+               top: 20,
+               right: 20,
+               bottom: 20,
+               left: 80
+           },
+           xScale = d3.scale.linear().range([MARGINS.left, WIDTH - MARGINS.right]).domain(d3.extent(data.map(function(datum){return datum.year}))),
+           yScale = d3.scale.linear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain(d3.extent(data.map(function(datum){return datum.value})));
+
+           xAxis = d3.svg.axis()
+            .scale(xScale)
+            .ticks(16),
+           //.tickFormat(customTickFormat),
+           //.outerTickSize(0),
+
+           yAxis = d3.svg.axis()
+           .scale(yScale);
+           vis.append("text")      // text label for the x axis
+                   .attr("x", 500 )
+                   .attr("y", 530 )
+                   .style("text-anchor", "middle")
+                   .style("font-size",18)
+                   .style("font-weight","bold")
+                   .text("YEAR");
+           vis.append("svg:g")
+           .attr("class","axis")
+           .attr("transform", "translate(0," + (HEIGHT - MARGINS.bottom) + ")")
+           .style("font-weight","bold")
+           .call(xAxis);
+           yAxis = d3.svg.axis()
+           .scale(yScale)
+           .orient("left");
+           vis.append("text")      // text label for the x axis
+                   .attr("x", -250 )
+                   .attr("y", 20 )
+                   .style("text-anchor", "middle")
+                   .attr("transform", "rotate(-90)")
+                   .style("font-size",18)
+                   .style("font-weight","bold")
+                   .text("VALUE");
+           vis.append("svg:g")
+           .attr("class","axis")
+           .attr("transform", "translate(" + (MARGINS.left) + ",0)")
+           .style("font-weight","bold")
+           .call(yAxis);
+           var canvas=d3.select("body").append("svg")
+           .attr("width", 500)
+           .attr("height", 500);
+           var lineGen = d3.svg.line()
+           .x(function(d)
+           {
+             return xScale(d.year);
+           })
+           .y(function(d)
+           {
+             return yScale(d.value);
+           })
+           .interpolate("basis");
+           vis.append('svg:path')
+           .attr('d', lineGen(Arrested))
+           .attr('stroke', 'green')
+           .attr('stroke-width', 2)
+           .attr('fill', 'none');
+           vis.append('svg:path')
+           .attr('d', lineGen(not_arrested))
+           .attr('stroke', 'red')
+           .attr('stroke-width', 2)
+           .attr('fill', 'none');
+           vis.append('text')
+               .attr('fill', 'black')
+               .attr('x', 665 + MARGINS.left + 8)
+               .attr('y', 0  * 24 + 24)
+               .text("NOT ARRESTED");
+           vis.append('rect')
+               .attr('fill', "red")
+               .attr('width', 60)
+               .attr('height', 20)
+               .attr('x', 700 + MARGINS.left + 90)
+               .attr('y', 0 * 24 + 6);
+           vis.append('text')
+               .attr('fill', 'black')
+               .attr('x', 698 + MARGINS.left + 8)
+               .attr('y', 1 * 24 + 24)
+               .text("ARRESTED");
+           vis.append('rect')
+               .attr('fill', "green")
+               .attr('width', 60)
+               .attr('height', 20)
+               .attr('x', 700 + MARGINS.left + 90)
+               .attr('y', 1 * 24 + 6);
+         });
+   </script>
+</body>
+</html>
